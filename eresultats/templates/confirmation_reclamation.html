@@ -1,0 +1,9 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container text-center">
+    <h3 class="mt-4">Réclamation envoyée avec succès !</h3>
+    <p>Votre demande a été prise en compte. Nous vous répondrons dès que possible.</p>
+    <a href="{% url 'recherche_resultats' %}" class="btn btn-primary">Retour à la recherche</a>
+</div>
+{% endblock %}

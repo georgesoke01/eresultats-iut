@@ -1,0 +1,177 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Plate forme de eRésultats de l'Institut Universitaire de Technologie de l'Université de Parakou">
+    <meta name="keywords" content="Parakou, Université de Parakou, IUT Parakou, IUT, eRésultat, Résultats">
+    <meta name="robots" content="index, follow">
+    <link href="https://fonts.googleapis.com/css?family=Poppins:100,200,300,400,500,600,700,800,900" rel="stylesheet">
+    <link href="{%static 'css/bootstrap.min.css'%}">
+    <link href="{%static 'img/logo.png'%}" rel="icon" type="image/png">
+    <link rel="stylesheet" href="{%static 'styles/styles.css' %}">
+    <link ref="stylesheet" href="{% static 'styles/resultat_style.css' %}">
+    <link href="{%static 'css/forms.css'%}">
+    <title>eRésultats-IUT</title>
+
+    <style>
+        body {
+            background-color: #f8f9fa;
+        }
+        .container {
+            max-width: 600px;
+            margin-top: 50px;
+        }
+        .table-container {
+            margin-top: 20px;
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            border: 1px;
+            box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1);
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="logo">
+            <a href="{%url 'index'%}">
+            <img src="{%static 'img/logo.png'%}" alt="logo eresultats">
+            <span>eRESULTATS-IUT</span>
+            </a>
+        </div>
+        <nav id="navMenu" class="menu">
+            <div class="navbar" id="menu-icon">
+                <div class="bar"></div>
+                <div class="bar"></div>
+                <div class="bar"></div>
+            </div>
+            <ul class ="menu-list" id="menu-list">
+                <li><a href="{%url 'index'%}" class="active">Accueil</a> </li>
+                <li><a href="#">Comment ça marche ?</a> </li>
+                <li><a href="#">Résultats des examens</a> </li>
+                <li><a href="#">Demande de documents</a> </li>
+                <li><a href="#">Epreuve et corrigés</a> </li>
+                <li><a href="#">FAQ</a> </li>
+            </ul>
+        </nav>
+    </header>
+    <main>
+        <h1>RESULTATS {{examen.titre|upper}}</h1>
+        <p class="warning"><strong >Attention </strong> : La divulgation des informations liées à un étudiant sans autorisation est
+            strictement interdite et séverement punit par la loi. <br>Confère le code du numérique du Bénin </p>
+        <p>Pour tout anormalie dans vos résultat ou pour tout autre assistance, prière contacter l'administration de
+            l'IUT Parakou ou en envoyant un mail au contact@iut.univ-par.bj</p>
+
+        <section class="recherche-section">
+            <h2>Critères de la recherche</h2>
+            <p>Veuillez entrer votre numéro matricule svp.</p>
+
+            <div class="container">
+                <form method="post" class="d-flex form-recherche">
+                    {% csrf_token %}
+                    <div class="form-group">
+                        {{ form.matricule }}
+                    </div>
+                    <button type="submit" class="btn btn-primary ms-2">Rechercher</button>
+                </form>
+        
+        </section>
+
+        <section id="resultatsRecherche" class="resultats-section">
+            <h2>Résultats de la recherche</h2>
+            {% if message %}
+                <div class="alert alert-danger mt-3">{{ message }}</div>
+            {% endif %}
+
+            {% if etudiant %}
+                <div class="table-container">
+                    <h4>Informations de l'Étudiant</h4>
+                    <table class="table">
+                        <tr><th>Matricule</th><td>{{ etudiant.matricule }}</td></tr>
+                        <tr><th>Nom</th><td>{{ etudiant.nom }}</td></tr>
+                        <tr><th>Prénoms</th><td>{{ etudiant.prenoms }}</td></tr>
+                        <tr><th>Niveau</th><td>{{ etudiant.niveau_etude }}</td></tr>
+                    </table>
+
+                    <h4>Notes</h4>
+                    {% if notes %}
+                        <table class="table table-striped">
+                            <thead>
+                                <tr><th>Matière</th><th>Note</th><th>Semestre</th></tr>
+                            </thead>
+                            <tbody>
+                                {% for note in notes %}
+                                    <tr class="{% if note.note < 12 %}table-danger{% endif %}">
+                                        <td>{{ note.matiere }}</td>
+                                        <td>{{ note.note }}</td>
+                                        <td>Semestre {{ note.semestre }}</td>
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    {% else %}
+                        <p>Aucune note disponible.</p>
+                    {% endif %}
+
+                    <h4>Statistiques</h4>
+                    <table class="table">
+                        <tr><th>Nombre d’UE validées</th><td>{{ ue_validees }}</td></tr>
+                        <tr><th>Nombre d’UE non validées</th><td>{{ ue_non_validees }}</td></tr>
+                    </table>
+
+                    <div class="d-flex gap-2">
+                        <a href="{% url 'export_pdf' etudiant.matricule %}" class="btn btn-success">Exporter en PDF</a>
+                        <button class="btn btn-warning" onclick="toggleNonValidees()">Voir mes matières non validées</button>
+                        {% if reclamations_actives %}
+                            <a href="{% url 'deposer_reclamation' etudiant.matricule %}" class="btn btn-danger">Déposer une réclamation</a>
+                        {% else %}
+                            <button class="btn btn-danger" disabled>Réclamations fermées</button>
+                        {% endif %}
+
+                    </div>
+
+                    <!-- Tableau des matières non validées (Caché par défaut) -->
+                    <div id="non-validees-section" style="display: none; margin-top: 20px;">
+                        <h4>Matières Non Validées</h4>
+                        {% if notes_non_validees %}
+                            <table class="table table-bordered">
+                                <thead>
+                                    <tr><th>Matière</th><th>Note</th><th>Semestre</th></tr>
+                                </thead>
+                                <tbody>
+                                    {% for note in notes_non_validees %}
+                                        <tr class="table-danger">
+                                            <td>{{ note.matiere }}</td>
+                                            <td>{{ note.note }}</td>
+                                            <td>Semestre {{ note.semestre }}</td>
+                                        </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        {% else %}
+                            <p>Aucune matière non validée.</p>
+                        {% endif %}
+                    </div>
+                </div>
+            {% endif %}
+        </section>
+
+    
+        
+
+    <!-- JavaScript pour afficher/cacher la section -->
+    <script>
+        function toggleNonValidees() {
+            var section = document.getElementById("non-validees-section");
+            if (section.style.display === "none") {
+                section.style.display = "block";
+            } else {
+                section.style.display = "none";
+            }
+        }
+    </script>
+
+</body>
+</html>
